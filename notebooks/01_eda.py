@@ -1,22 +1,3 @@
-"""
-===============================================================================
- 01_eda.py — Exploratory Data Analysis for Water Quality Dataset
-===============================================================================
- Run this script first to understand and clean the dataset.
- 
- What this script does:
-   1. Loads the raw dataset
-   2. Inspects shape, types, missing values
-   3. Handles missing values (median imputation)
-   4. Generates distribution plots, correlation heatmap, box plots
-   5. Creates quality labels from WHO/BIS standards
-   6. Saves cleaned dataset to data/processed/
- 
- Usage:
-   python notebooks/01_eda.py
-===============================================================================
-"""
-
 import pandas as pd
 import numpy as np
 import matplotlib
@@ -26,13 +7,11 @@ import seaborn as sns
 import os
 import sys
 
-# ─── Configuration ────────────────────────────────────────────────────────────
-RAW_DATA_PATH = os.path.join('data', 'raw', 'water_potability.csv')
-PROCESSED_DATA_PATH = os.path.join('data', 'processed', 'water_quality_cleaned.csv')
-PLOTS_DIR = os.path.join('notebooks', 'plots')
-os.makedirs(PLOTS_DIR, exist_ok=True)
+BASE_DIR = r'C:\Users\omen\.gemini\antigravity-ide\scratch\water-quality-ml'
+RAW_DATA_PATH = os.path.join(BASE_DIR, 'data', 'raw', 'water_potability.csv')
+PROCESSED_DATA_PATH = os.path.join(BASE_DIR, 'data', 'processed', 'water_quality_cleaned.csv')
+PLOTS_DIR = os.path.join(BASE_DIR, 'notebooks', 'plots')
 
-# Our target column mapping (dataset columns → our standard names)
 COLUMN_MAPPING = {
     'ph': 'pH',
     'Hardness': 'hardness',
@@ -46,46 +25,20 @@ COLUMN_MAPPING = {
     'Potability': 'potability'
 }
 
-# The 6 parameters relevant to our sensors
-SENSOR_PARAMS = ['pH', 'tds', 'turbidity', 'conductivity']
+sensor_params = ['pH', 'tds', 'turbidity', 'conductivity']
 # Note: This Kaggle dataset doesn't have temperature & DO directly,
 # but has related water quality params. We'll work with what's available
 # and our labeling system will be based on these + additional params.
 
-print("=" * 70)
-print("  WATER QUALITY — EXPLORATORY DATA ANALYSIS")
-print("=" * 70)
-
 # ─── Step 1: Load Dataset ────────────────────────────────────────────────────
-print("\n📂 Step 1: Loading dataset...")
-if not os.path.exists(RAW_DATA_PATH):
-    print(f"  ⚠️  Dataset not found at {RAW_DATA_PATH}")
-    print("  Downloading from GitHub...")
-    try:
-        df = pd.read_csv(
-            'https://raw.githubusercontent.com/Sarthak-1408/Water-Potability/main/water_potability.csv'
-        )
-        os.makedirs(os.path.dirname(RAW_DATA_PATH), exist_ok=True)
-        df.to_csv(RAW_DATA_PATH, index=False)
-        print(f"  ✅ Downloaded and saved to {RAW_DATA_PATH}")
-    except Exception as e:
-        print(f"  ❌ Failed to download: {e}")
-        sys.exit(1)
-else:
-    df = pd.read_csv(RAW_DATA_PATH)
-    print(f"  ✅ Loaded from {RAW_DATA_PATH}")
-
-print(f"\n  Shape: {df.shape[0]} rows × {df.shape[1]} columns")
-print(f"  Columns: {df.columns.tolist()}")
+df = pd.read_csv(RAW_DATA_PATH)
+print(f"Shape: {df.shape[0]} rows × {df.shape[1]} columns")
+print(f"Columns: {df.columns.tolist()}")
 
 # ─── Step 2: Basic Inspection ────────────────────────────────────────────────
-print("\n" + "─" * 70)
-print("📊 Step 2: Basic Inspection")
-print("─" * 70)
-
 print("\n  Data Types:")
 for col in df.columns:
-    print(f"    {col:25s} → {df[col].dtype}")
+    print(f" {col:25s} → {df[col].dtype}")
 
 print("\n  First 5 rows:")
 print(df.head().to_string(index=False))
@@ -94,9 +47,10 @@ print("\n  Statistical Summary:")
 print(df.describe().round(2).to_string())
 
 # ─── Step 3: Missing Values ──────────────────────────────────────────────────
-print("\n" + "─" * 70)
-print("🔍 Step 3: Missing Values Analysis")
-print("─" * 70)
+# Using median Imputation for handleing missing values 
+# It's the standard approach for water quality datasets
+
+print("Missing Values Analysis")
 
 missing = df.isnull().sum()
 missing_pct = (df.isnull().sum() / len(df) * 100).round(2)
@@ -112,18 +66,16 @@ if total_missing > 0:
     print(f"\n  Total missing values: {total_missing}")
     print("  Strategy: Filling with MEDIAN (robust to outliers)")
     df_clean = df.fillna(df.median(numeric_only=True))
-    print("  ✅ Missing values filled with median")
+    print(" Missing values filled with median")
 else:
     df_clean = df.copy()
-    print("  ✅ No missing values found!")
+    print(" No missing values found!")
 
 # Verify no missing values remain
 assert df_clean.isnull().sum().sum() == 0, "Still have missing values!"
 
 # ─── Step 4: Distribution Plots ──────────────────────────────────────────────
-print("\n" + "─" * 70)
-print("📈 Step 4: Generating Distribution Plots")
-print("─" * 70)
+print("Distribution Plots")
 
 fig, axes = plt.subplots(3, 3, figsize=(16, 14))
 fig.suptitle('Distribution of Water Quality Parameters', fontsize=16, fontweight='bold', y=1.02)
@@ -152,13 +104,11 @@ for idx in range(len(numeric_cols), 9):
 plt.tight_layout()
 dist_path = os.path.join(PLOTS_DIR, 'distributions.png')
 plt.savefig(dist_path, dpi=150, bbox_inches='tight')
+plt.show()
 plt.close()
-print(f"  ✅ Saved distribution plots → {dist_path}")
 
 # ─── Step 5: Correlation Heatmap ─────────────────────────────────────────────
-print("\n" + "─" * 70)
-print("🔗 Step 5: Correlation Heatmap")
-print("─" * 70)
+print("Correlation Heatmap")
 
 fig, ax = plt.subplots(figsize=(12, 10))
 corr_matrix = df_clean.corr(numeric_only=True)
@@ -174,7 +124,6 @@ plt.tight_layout()
 corr_path = os.path.join(PLOTS_DIR, 'correlation_heatmap.png')
 plt.savefig(corr_path, dpi=150, bbox_inches='tight')
 plt.close()
-print(f"  ✅ Saved correlation heatmap → {corr_path}")
 
 # Print notable correlations
 print("\n  Notable correlations (|r| > 0.3):")
@@ -190,9 +139,8 @@ if not any(abs(corr_matrix.iloc[i, j]) > 0.3
     print("    None found (all correlations are weak — good for independent features!)")
 
 # ─── Step 6: Box Plots (Outlier Detection) ───────────────────────────────────
-print("\n" + "─" * 70)
-print("📦 Step 6: Box Plots for Outlier Detection")
-print("─" * 70)
+print("Box Plots for Outlier Detection")
+
 
 fig, axes = plt.subplots(3, 3, figsize=(16, 14))
 fig.suptitle('Box Plots — Outlier Detection', fontsize=16, fontweight='bold', y=1.02)
@@ -212,7 +160,6 @@ plt.tight_layout()
 box_path = os.path.join(PLOTS_DIR, 'boxplots.png')
 plt.savefig(box_path, dpi=150, bbox_inches='tight')
 plt.close()
-print(f"  ✅ Saved box plots → {box_path}")
 
 # Quantify outliers using IQR method
 print("\n  Outlier count (IQR method):")
@@ -226,9 +173,8 @@ for col in numeric_cols:
         print(f"    {col:25s}: {outliers:4d} outliers ({pct:.1f}%)")
 
 # ─── Step 7: Class Distribution ──────────────────────────────────────────────
-print("\n" + "─" * 70)
-print("📊 Step 7: Class Distribution (Potability)")
-print("─" * 70)
+print("Class Distribution (Potability)")
+
 
 if 'Potability' in df_clean.columns:
     class_counts = df_clean['Potability'].value_counts()
@@ -237,10 +183,10 @@ if 'Potability' in df_clean.columns:
     
     imbalance_ratio = class_counts.max() / class_counts.min()
     if imbalance_ratio > 1.5:
-        print(f"\n  ⚠️  Class imbalance detected! Ratio: {imbalance_ratio:.2f}")
+        print(f"\n  Class imbalance detected! Ratio: {imbalance_ratio:.2f}")
         print("  → Will use stratified split and consider class_weight='balanced'")
     else:
-        print(f"\n  ✅ Classes are reasonably balanced (ratio: {imbalance_ratio:.2f})")
+        print(f"\n  Classes are reasonably balanced (ratio: {imbalance_ratio:.2f})")
     
     # Plot class distribution
     fig, ax = plt.subplots(figsize=(8, 5))
@@ -256,12 +202,9 @@ if 'Potability' in df_clean.columns:
     class_path = os.path.join(PLOTS_DIR, 'class_distribution.png')
     plt.savefig(class_path, dpi=150, bbox_inches='tight')
     plt.close()
-    print(f"  ✅ Saved class distribution plot → {class_path}")
 
 # ─── Step 8: Create Multi-Class Quality Labels ───────────────────────────────
-print("\n" + "─" * 70)
-print("🏷️  Step 8: Creating Multi-Class Quality Labels")
-print("─" * 70)
+print("Step 8: Creating Multi-Class Quality Labels")
 
 def calculate_quality_score(row):
     """
@@ -275,6 +218,7 @@ def calculate_quality_score(row):
       - Poor:      score >= 40
       - Dangerous:  score < 40
     """
+    
     scores = []
     
     # pH scoring (ideal: 6.5-8.5)
@@ -416,40 +360,17 @@ plt.tight_layout()
 quality_path = os.path.join(PLOTS_DIR, 'quality_classes.png')
 plt.savefig(quality_path, dpi=150, bbox_inches='tight')
 plt.close()
-print(f"  ✅ Saved quality class plots → {quality_path}")
 
 # ─── Step 9: Save Cleaned Dataset ────────────────────────────────────────────
-print("\n" + "─" * 70)
-print("💾 Step 9: Saving Cleaned Dataset")
-print("─" * 70)
+print("Step 9: Saving Cleaned Dataset")
 
 os.makedirs(os.path.dirname(PROCESSED_DATA_PATH), exist_ok=True)
 df_clean.to_csv(PROCESSED_DATA_PATH, index=False)
-print(f"  ✅ Saved to {PROCESSED_DATA_PATH}")
-print(f"  Shape: {df_clean.shape}")
-print(f"  Columns: {df_clean.columns.tolist()}")
 
 # Also save a time-series version with synthetic timestamps
 # (for the forecasting model later)
 print("\n  Creating time-series version with synthetic timestamps...")
 df_ts = df_clean.copy()
 df_ts['timestamp'] = pd.date_range(start='2024-01-01', periods=len(df_ts), freq='h')
-ts_path = os.path.join('data', 'processed', 'water_quality_timeseries.csv')
+ts_path = os.path.join(BASE_DIR, 'data', 'processed', 'water_quality_timeseries.csv')
 df_ts.to_csv(ts_path, index=False)
-print(f"  ✅ Saved time-series dataset → {ts_path}")
-
-# ─── Summary ─────────────────────────────────────────────────────────────────
-print("\n" + "=" * 70)
-print("  EDA COMPLETE ✅")
-print("=" * 70)
-print(f"""
-  📁 Raw data:        {RAW_DATA_PATH}
-  📁 Cleaned data:    {PROCESSED_DATA_PATH}
-  📁 Time-series:     {ts_path}
-  📁 Plots saved to:  {PLOTS_DIR}/
-  
-  📊 Dataset: {df_clean.shape[0]} rows × {df_clean.shape[1]} columns
-  🏷️  Quality classes: {df_clean['quality_class'].value_counts().to_dict()}
-  
-  Next step: Run 02_classification.py to train the classifier!
-""")

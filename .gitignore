@@ -12,8 +12,10 @@ venv/
 env/
 
 # ─── Data (too large for git) ────────────────
-data/raw/
-data/processed/
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
 
 # ─── Trained Models (too large for git) ──────
 models/*.joblib
