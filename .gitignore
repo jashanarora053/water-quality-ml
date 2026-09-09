@@ -1,0 +1,35 @@
+# ─── Python ───────────────────────────────────
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+dist/
+build/
+
+# ─── Virtual Environment ─────────────────────
+venv/
+.venv/
+env/
+
+# ─── Data (too large for git) ────────────────
+data/raw/
+data/processed/
+
+# ─── Trained Models (too large for git) ──────
+models/*.joblib
+models/prophet_models/*.json
+!models/.gitkeep
+!models/prophet_models/.gitkeep
+
+# ─── Generated Plots ─────────────────────────
+notebooks/plots/
+
+# ─── IDE / OS ─────────────────────────────────
+.vscode/
+.idea/
+*.swp
+Thumbs.db
+.DS_Store
+
+# ─── Jupyter ──────────────────────────────────
+.ipynb_checkpoints/
