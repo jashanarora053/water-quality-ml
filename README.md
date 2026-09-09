@@ -1,6 +1,6 @@
 # Water Quality ML Models — README
 
-## 🌊 Overview
+##  Overview
 
 This project contains **three ML models** for real-time water quality monitoring:
 
@@ -8,7 +8,7 @@ This project contains **three ML models** for real-time water quality monitoring
 2. **Anomaly Detector** — Flags unusual readings (possible contamination)
 3. **Time-Series Forecaster** — Predicts future parameter values
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### 1. Setup
 ```bash
@@ -78,7 +78,7 @@ Visit **http://localhost:8000/docs** for interactive API documentation.
 
 ### GET `/health` — Health Check
 
-## 📁 Project Structure
+## Project Structure
 ```
 water-quality-ml/
 ├── data/raw/                    # Raw datasets
