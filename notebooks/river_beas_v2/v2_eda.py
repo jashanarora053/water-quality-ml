@@ -31,9 +31,9 @@ for file in file_paths:
 df = pd.concat(df_list, ignore_index=True)
 print(f"Merged dataset has {df.shape[0]} rows and {df.shape[1]} columns")
 
-# 3. Convert Data to Numeric (CRITICAL STEP)
-# Forces Pandas to treat these as numbers instead of text strings
-numeric_cols = ['pH', 'TURBIDITY(NTU)', 'COND.(µS/cm)', 'DO(mg/l)', 'BOD(mg/l)', 'COD(mg/l)']
+# 3. Convert Data to Numeric
+# Added TEMP.(ºC) and CL(mg/l) to be converted to numbers
+numeric_cols = ['pH', 'TURBIDITY(NTU)', 'COND.(µS/cm)', 'DO(mg/l)', 'BOD(mg/l)', 'COD(mg/l)', 'TEMP.(ºC)', 'CL(mg/l)']
 for col in numeric_cols:
     if col in df.columns:
         df[col] = pd.to_numeric(df[col], errors='coerce')
@@ -41,16 +41,21 @@ for col in numeric_cols:
 # 4. Calculate missing TDS
 df['TDS'] = df['COND.(µS/cm)'] * 0.65
 
-# 5. Filter Core Columns (Dropping Temp here to save a step)
+# 5. Filter Core Columns (Including Temp and Chlorides now)
 final_columns = [
     'pH',
     'TURBIDITY(NTU)',
     'COND.(µS/cm)',
     'TDS',            
     'DO(mg/l)',
-    'BOD(mg/l)',
-    'COD(mg/l)'
+    'TEMP.(ºC)',    # Kept: Hardware has Temp
+    'CL(mg/l)',     # Kept: Hardware proxy for Chlorides
+    'BOD(mg/l)',    # Kept: Hardware proxy for BOD
+    'COD(mg/l)'     # Kept temporarily just to calculate the score
 ]
+
+# Only keep columns that actually exist in the dataframe
+final_columns = [c for c in final_columns if c in df.columns]
 df = df[final_columns]
 df = df.dropna(how='all')
 
@@ -59,7 +64,9 @@ print("\n--- Cleaning Data ---")
 df = df.dropna(subset=['BOD(mg/l)', 'COD(mg/l)'])
 print(f"Dropped rows missing BOD/COD. Remaining rows: {len(df)}")
 
-columns_to_fill = ['pH', 'TURBIDITY(NTU)', 'COND.(µS/cm)', 'TDS', 'DO(mg/l)']
+# Fill everything else with the median
+columns_to_fill = ['pH', 'TURBIDITY(NTU)', 'COND.(µS/cm)', 'TDS', 'DO(mg/l)', 'TEMP.(ºC)', 'CL(mg/l)']
+columns_to_fill = [c for c in columns_to_fill if c in df.columns]
 df[columns_to_fill] = df[columns_to_fill].fillna(df[columns_to_fill].median())
 
 print("Null % age after cleaning:")
@@ -108,12 +115,15 @@ print("\nCalculating quality scores...")
 df['quality_score'] = df.apply(calculate_river_quality, axis=1)
 df['quality_label'] = df['quality_score'].apply(score_to_class)
 
-# 8. Create Final Dataset (Drop Cheating Columns)
-cols_to_drop = ['BOD(mg/l)', 'COD(mg/l)', 'quality_score']
-df_final = df.drop(columns=cols_to_drop)
+# 8. Create Final Dataset 
+# The hardware sheet has a Red X for COD, so we drop it.
+# We also drop the raw quality_score.
+cols_to_drop = ['COD(mg/l)', 'quality_score']
+existing_cols_to_drop = [c for c in cols_to_drop if c in df.columns]
+df_final = df.drop(columns=existing_cols_to_drop)
 
 # 9. Save to CSV
-# I changed the save path to your OneDrive folder so you don't lose it!
 output_path = r"C:\Users\omen\OneDrive\Documents\wq_data_hp\cleaned_beas_data.csv"
 df_final.to_csv(output_path, index=False)
 print(f"\n Final cleaned dataset saved to: {output_path}")
+print(f"Columns in final dataset: {list(df_final.columns)}")

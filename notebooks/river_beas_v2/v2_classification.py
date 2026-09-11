@@ -17,7 +17,7 @@ print(" River Beas Water Quality Classification (XGBoost)")
 print("="*60)
 
 # ─── 1. Load the Cleaned Data ────────────────────────────────────────────────
-data_path = r"C:\Users\omen\OneDrive\Documents\wq_data_hp\cleaned_wq_data_hp.csv"
+data_path = r"C:\Users\omen\OneDrive\Documents\wq_data_hp\cleaned_beas_data.csv"
 print(f"Loading dataset from: {data_path}")
 
 if not os.path.exists(data_path):
